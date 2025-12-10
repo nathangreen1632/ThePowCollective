@@ -46,7 +46,7 @@ export default function AppShell({ children }: Readonly<AppShellProps>): React.R
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-4">
+      <main className="mx-auto max-w-7xl px-4 py-4">
         {children}
       </main>
       <footer className="mt-8 border-t border-[var(--pow-border)] bg-[var(--pow-surface)]">
