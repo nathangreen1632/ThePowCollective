@@ -12,10 +12,10 @@ export default function AppShell({ children }: Readonly<AppShellProps>): React.R
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/" aria-label="PowCollective home" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-[var(--pow-accent-soft)] flex items-center justify-center text-xs font-bold text-[var(--pow-accent)]">
-              POW
+              TPC
             </div>
             <span className="text-sm font-semibold tracking-tight">
-              PowCollective
+              thePowCollective
             </span>
           </Link>
           <nav aria-label="Main navigation" className="flex items-center gap-4 text-xs font-medium">
