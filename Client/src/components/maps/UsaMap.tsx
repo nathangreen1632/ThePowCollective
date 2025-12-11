@@ -1,56 +1,94 @@
-// Client/src/components/maps/UsaMap.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+
+const geoUrl = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
+
+const STATE_SLUGS: Record<string, string> = {
+  Alaska: 'ak',
+  California: 'ca',
+  Colorado: 'co',
+  Connecticut: 'ct',
+  Delaware: 'de',
+  Idaho: 'id',
+  Maine: 'me',
+  Maryland: 'md',
+  Massachusetts: 'ma',
+  Michigan: 'mi',
+  Minnesota: 'mn',
+  Montana: 'mt',
+  Nevada: 'nv',
+  'New Hampshire': 'nh',
+  'New Mexico': 'nm',
+  'New York': 'ny',
+  'North Carolina': 'nc',
+  'North Dakota': 'nd',
+  Ohio: 'oh',
+  Oregon: 'or',
+  Pennsylvania: 'pa',
+  Utah: 'ut',
+  Vermont: 'vt',
+  Virginia: 'va',
+  Washington: 'wa',
+  Wisconsin: 'wi',
+  Wyoming: 'wy',
+};
 
 export default function UsaMap(): React.ReactElement {
   const navigate = useNavigate();
 
-  function handleColoradoClick() {
-    navigate('/states/co');
+  function handleStateClick(slug: string) {
+    navigate(`/states/${slug}`);
   }
 
   return (
-    <div className="flex items-center justify-center">
-      <svg
-        viewBox="0 0 960 600"
-        role="text"
-        aria-label="Map of the United States. Colorado is selectable."
-        className="max-w-full drop-shadow"
-      >
-        {/* Rough US silhouette background */}
-        <path
-          d="M40 180 L120 120 L220 110 L320 90 L420 100 L520 120 L640 160 L740 180 L860 220 L900 260 L880 340 L820 380 L740 420 L640 440 L520 460 L420 450 L320 430 L220 400 L140 360 L80 320 Z"
-          fill="var(--pow-surface)"
-          stroke="var(--pow-border)"
-          strokeWidth="2"
-        />
-
-        {/* Colorado rectangle, positioned roughly central-west */}
-        <rect
-          x="340"
-          y="250"
-          width="140"
-          height="90"
-          rx="4"
-          ry="4"
-          fill="var(--pow-accent-soft)"
-          stroke="var(--pow-accent)"
-          strokeWidth="3"
-          className="cursor-pointer transition-[fill] hover:fill-[var(--pow-accent)]"
-          onClick={handleColoradoClick}
-        />
-
-        <text
-          x="410"
-          y="305"
-          textAnchor="middle"
-          fontSize="18"
-          fill="var(--pow-accent-strong, #ffffff)"
-          pointerEvents="none"
+    <div className="w-full flex justify-center">
+      <div className="w-full max-w-4xl">
+        <ComposableMap
+          projection="geoAlbersUsa"
+          style={{ width: '100%', height: 'auto' }}
         >
-          CO
-        </text>
-      </svg>
+          <Geographies geography={geoUrl}>
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const props = geo.properties as { name?: string };
+                const name = props.name ?? '';
+                const slug = STATE_SLUGS[name];
+                const isActive = Boolean(slug);
+
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    onClick={isActive ? () => handleStateClick(slug) : undefined}
+                    style={{
+                      default: {
+                        fill: isActive
+                          ? 'var(--pow-accent-soft)'
+                          : 'var(--pow-surface-alt)',
+                        outline: 'none',
+                        stroke: 'var(--pow-border)',
+                        strokeWidth: 0.75,
+                      },
+                      hover: {
+                        fill: isActive
+                          ? 'var(--pow-accent)'
+                          : 'var(--pow-surface)',
+                        outline: 'none',
+                      },
+                      pressed: {
+                        fill: 'var(--pow-accent-strong)',
+                        outline: 'none',
+                      },
+                    }}
+                    className={isActive ? 'cursor-pointer' : 'cursor-default'}
+                  />
+                );
+              })
+            }
+          </Geographies>
+        </ComposableMap>
+      </div>
     </div>
   );
 }
