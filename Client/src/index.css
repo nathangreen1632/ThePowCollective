@@ -2,36 +2,36 @@
 @import "tailwindcss";
 
 :root {
-  --pow-bg: #020617;
-  --pow-surface: #020817;
-  --pow-surface-alt: #0b1220;
-  --pow-border: #1e293b;
-  --pow-text: #e5e7eb;
-  --pow-muted: #9ca3af;
-  --pow-accent: #38bdf8;
-  --pow-accent-soft: rgba(56, 189, 248, 0.12);
+  --pow-bg: #13293d;
+  --pow-surface: #16324f;
+  --pow-surface-alt: #18435a;
+  --pow-border: #2a628f;
+  --pow-text: #e0fbfc;
+  --pow-muted: #9db4c0;
+  --pow-accent: #3e92cc;
+  --pow-accent-soft: rgba(62, 146, 204, 0.16);
   --pow-danger: #f97316;
-  --pow-danger-soft: rgba(248, 113, 113, 0.15);
+  --pow-danger-soft: rgba(249, 115, 22, 0.16);
   --pow-success: #22c55e;
   --pow-success-soft: rgba(34, 197, 94, 0.18);
-  --pow-card-shadow: rgba(15, 23, 42, 0.7);
+  --pow-card-shadow: rgba(0, 0, 0, 0.6);
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --pow-bg: #e5f0ff;
-    --pow-surface: #f9fafb;
-    --pow-surface-alt: #eff6ff;
-    --pow-border: #cbd5f5;
-    --pow-text: #020617;
-    --pow-muted: #4b5563;
-    --pow-accent: #2563eb;
-    --pow-accent-soft: rgba(37, 99, 235, 0.12);
+    --pow-bg: #e0fbfc;
+    --pow-surface: #c2dfe3;
+    --pow-surface-alt: #9db4c0;
+    --pow-border: #5c6b73;
+    --pow-text: #253237;
+    --pow-muted: #5c6b73;
+    --pow-accent: #2a628f;
+    --pow-accent-soft: rgba(42, 98, 143, 0.14);
     --pow-danger: #ea580c;
     --pow-danger-soft: rgba(234, 88, 12, 0.14);
     --pow-success: #16a34a;
     --pow-success-soft: rgba(22, 163, 74, 0.14);
-    --pow-card-shadow: rgba(148, 163, 184, 0.5);
+    --pow-card-shadow: rgba(37, 50, 55, 0.4);
   }
 }
 
