@@ -2,9 +2,9 @@ import React from 'react';
 import { useTheme } from '../hooks/useTheme';
 
 export default function SnowflakeThemeToggle(): React.ReactElement {
-  const { mode, theme, cycleMode } = useTheme();
+  const { theme, cycleMode } = useTheme();
 
-  const label = mode === 'system' ? `Theme: system (${theme})` : `Theme: ${mode}`;
+  const label =  `Theme: system (${theme})`;
 
   return (
     <button
