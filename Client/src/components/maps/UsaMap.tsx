@@ -1,6 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Marker,
+} from 'react-simple-maps';
+import { geoCentroid } from 'd3-geo';
 
 const geoUrl = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
 
@@ -34,6 +40,36 @@ const STATE_SLUGS: Record<string, string> = {
   Wyoming: 'wy',
 };
 
+const STATE_RESORT_COUNTS: Record<string, number> = {
+  ak: 5,
+  ca: 30,
+  co: 28,
+  ct: 3,
+  de: 1,
+  id: 18,
+  me: 10,
+  md: 2,
+  ma: 7,
+  mi: 15,
+  mn: 12,
+  mt: 16,
+  nv: 8,
+  nh: 9,
+  nm: 7,
+  ny: 25,
+  nc: 6,
+  nd: 3,
+  oh: 4,
+  or: 11,
+  pa: 14,
+  ut: 20,
+  vt: 12,
+  va: 3,
+  wa: 13,
+  wi: 9,
+  wy: 10,
+};
+
 export default function UsaMap(): React.ReactElement {
   const navigate = useNavigate();
 
@@ -55,34 +91,57 @@ export default function UsaMap(): React.ReactElement {
                 const name = props.name ?? '';
                 const slug = STATE_SLUGS[name];
                 const isActive = Boolean(slug);
+                const count = slug ? STATE_RESORT_COUNTS[slug] ?? 0 : 0;
+                const centroid = geoCentroid(geo as any);
+                const [lon, lat] = centroid;
 
                 return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    onClick={isActive ? () => handleStateClick(slug) : undefined}
-                    style={{
-                      default: {
-                        fill: isActive
-                          ? 'var(--pow-accent-soft)'
-                          : 'var(--pow-surface-alt)',
-                        outline: 'none',
-                        stroke: 'var(--pow-border)',
-                        strokeWidth: 0.75,
-                      },
-                      hover: {
-                        fill: isActive
-                          ? 'var(--pow-accent)'
-                          : 'var(--pow-surface)',
-                        outline: 'none',
-                      },
-                      pressed: {
-                        fill: 'var(--pow-accent-strong)',
-                        outline: 'none',
-                      },
-                    }}
-                    className={isActive ? 'cursor-pointer' : 'cursor-default'}
-                  />
+                  <g key={geo.rsmKey}>
+                    <Geography
+                      geography={geo}
+                      onClick={isActive ? () => handleStateClick(slug) : undefined}
+                      style={{
+                        default: {
+                          fill: isActive
+                            ? 'var(--pow-accent-soft)'
+                            : 'var(--pow-surface-alt)',
+                          outline: 'none',
+                          stroke: 'var(--pow-border)',
+                          strokeWidth: 0.75,
+                        },
+                        hover: {
+                          fill: isActive
+                            ? 'var(--pow-accent)'
+                            : 'var(--pow-surface)',
+                          outline: 'none',
+                        },
+                        pressed: {
+                          fill: 'var(--pow-accent-strong)',
+                          outline: 'none',
+                        },
+                      }}
+                      className={isActive ? 'cursor-pointer' : 'cursor-default'}
+                    />
+
+                    {isActive &&
+                      Number.isFinite(lon) &&
+                      Number.isFinite(lat) && (
+                        <Marker coordinates={[lon, lat] as [number, number]}>
+                          <text
+                            textAnchor="middle"
+                            alignmentBaseline="middle"
+                            style={{
+                              pointerEvents: 'none',
+                              fontSize: 9,
+                              fontWeight: 600,
+                              fill: 'var(--pow-text)',
+                            }}
+                          >
+                            {`${name} (${count})`}
+                          </text>
+                        </Marker>
+                      )}
+                  </g>
                 );
               })
             }
