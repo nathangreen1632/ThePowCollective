@@ -92,7 +92,7 @@ export default function UsaMap(): React.ReactElement {
                 const slug = STATE_SLUGS[name];
                 const isActive = Boolean(slug);
                 const count = slug ? STATE_RESORT_COUNTS[slug] ?? 0 : 0;
-                const centroid = geoCentroid(geo as any);
+                const centroid = geoCentroid(geo);
                 const [lon, lat] = centroid;
 
                 return (
