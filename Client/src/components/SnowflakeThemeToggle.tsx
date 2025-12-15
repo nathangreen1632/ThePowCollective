@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../hooks/useTheme';
+import {pressBtn} from "../ui/press.ts";
 
 export default function SnowflakeThemeToggle(): React.ReactElement {
   const { theme, cycleMode } = useTheme();
@@ -12,7 +13,11 @@ export default function SnowflakeThemeToggle(): React.ReactElement {
       onClick={cycleMode}
       aria-label={label}
       aria-pressed={theme === 'dark'}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] text-[var(--pow-text)] shadow-md hover:bg-[var(--pow-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pow-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pow-bg)]"
+      className={pressBtn("inline-flex h-9 w-9 items-center justify-center " +
+        "rounded-full border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] " +
+        "text-[var(--pow-text)] shadow-md hover:bg-[var(--pow-accent-soft)] " +
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pow-accent)] " +
+        "focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pow-bg)]")}
     >
       <svg
         viewBox="0 0 24 24"
