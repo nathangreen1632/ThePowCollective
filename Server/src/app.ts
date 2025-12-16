@@ -1,14 +1,18 @@
-import express from 'express';
-import { PORT } from './config/env.js';
+import express, {Express} from 'express';
+import morgan from 'morgan';
+import resortsRouter from './routes/resorts.route.js';
+import conditionsRouter from './routes/conditions.route.js';
 
-const app = express();
+const app: Express = express();
 
 app.use(express.json());
+app.use(morgan('tiny'));
+
+app.use('/api/resorts', resortsRouter);
+app.use('/api/conditions', conditionsRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+export default app;
