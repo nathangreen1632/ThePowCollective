@@ -1,12 +1,5 @@
 import React from 'react';
-
-export type ClusterBucket = {
-  label: string;
-  tempF: number;
-  snowfallIn: number;
-  windMph: number;
-  severity: 'calm' | 'good' | 'stormy';
-};
+import type { ClusterBucket } from '../types/conditions.types';
 
 type ClusterGaugeProps = {
   buckets: ClusterBucket[];
