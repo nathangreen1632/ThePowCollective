@@ -6,5 +6,5 @@ const port = Number(process.env.PORT || 3001);
 const server = createServer(app);
 
 server.listen(port, () => {
-  process.stdout.write(`PowCollective API listening on ${port}\n`);
+  process.stdout.write(`thePowCollective API listening on ${port}\n`);
 });
