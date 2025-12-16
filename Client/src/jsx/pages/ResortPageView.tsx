@@ -1,23 +1,16 @@
-import React from 'react';
-import { getResortBySlug } from '../../helpers/resort.helpers';
-import ClusterGauge, { type ClusterBucket } from '../../components/ClusterGauge';
+import React, { useEffect, useState } from 'react';
+import ClusterGauge from '../../components/ClusterGauge';
+import type { ClusterBucket, ConditionsSnapshot } from '../../types/conditions.types';
+import type { ResortSummary } from '../../types/resort.types';
+import { fetchResort } from '../../api/resorts';
+import { fetchConditionsForResort } from '../../api/conditions';
 
 type ResortPageViewProps = {
   resortSlug: string;
 };
 
-function severityForBucket(bucket: ClusterBucket): ClusterBucket['severity'] {
-  if (bucket.windMph >= 40 || bucket.snowfallIn >= 0.2) return 'stormy';
-  if (bucket.snowfallIn >= 0.05) return 'good';
-  return 'calm';
-}
-
-export default function ResortPageView({
-                                         resortSlug
-                                       }: Readonly<ResortPageViewProps>): React.ReactElement {
-  const resort = getResortBySlug(resortSlug);
-
-  const bucketsBase: Omit<ClusterBucket, 'severity'>[] = [
+function buildFallbackBuckets(): ClusterBucket[] {
+  const base: Omit<ClusterBucket, 'severity'>[] = [
     {
       label: 'Past 15 min',
       tempF: 18,
@@ -38,11 +31,102 @@ export default function ResortPageView({
     }
   ];
 
-  const buckets: ClusterBucket[] = bucketsBase.map(b => {
-    const withSeverity: ClusterBucket = { ...b, severity: 'calm' };
-    withSeverity.severity = severityForBucket(withSeverity);
-    return withSeverity;
+  return base.map(bucket => {
+    const result: ClusterBucket = {
+      ...bucket,
+      severity: 'calm'
+    };
+
+    if (result.windMph >= 40 || result.snowfallIn >= 0.2) {
+      result.severity = 'stormy';
+    } else if (result.snowfallIn >= 0.05) {
+      result.severity = 'good';
+    }
+
+    return result;
   });
+}
+
+export default function ResortPageView({
+                                         resortSlug
+                                       }: Readonly<ResortPageViewProps>): React.ReactElement {
+  const [resort, setResort] = useState<ResortSummary | null>(null);
+  const [conditions, setConditions] = useState<ConditionsSnapshot | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!resortSlug) return;
+
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [resortData, conditionsData] = await Promise.all([
+          fetchResort(resortSlug),
+          fetchConditionsForResort(resortSlug)
+        ]);
+
+        if (!cancelled) {
+          setResort(resortData);
+          setConditions(conditionsData);
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Unable to load resort conditions right now.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resortSlug]);
+
+  if (loading) {
+    return (
+      <section className="space-y-4">
+        <header className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+            Resort
+          </p>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Loading resort…
+          </h1>
+        </header>
+        <p className="text-sm text-[var(--pow-muted)]">
+          Pulling live snow and weather conditions.
+        </p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="space-y-4">
+        <header className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+            Resort
+          </p>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Something went wrong
+          </h1>
+        </header>
+        <p className="text-sm text-[var(--pow-danger)]">
+          {error}
+        </p>
+      </section>
+    );
+  }
 
   if (!resort) {
     return (
@@ -56,15 +140,28 @@ export default function ResortPageView({
           </h1>
         </header>
         <p className="text-sm text-[var(--pow-muted)]">
-          This resort is not yet part of the PowCollective Colorado pilot.
+          This resort is not yet part of the PowCollective pilot.
         </p>
       </section>
     );
   }
 
-  const elevationTopFeet = Math.round(resort.elevationTopM * 3.28084);
-  const elevationBaseFeet = Math.round(resort.elevationBaseM * 3.28084);
-  const verticalDropFeet = Math.round(resort.verticalDropM * 3.28084);
+  let buckets: ClusterBucket[] = buildFallbackBuckets();
+
+  if (conditions && conditions.clusterBuckets.length > 0) {
+    buckets = conditions.clusterBuckets;
+  }
+
+  const top = resort.elevationTopFt.toLocaleString();
+  const base = resort.elevationBaseFt.toLocaleString();
+  const vertical = resort.verticalDropFt.toLocaleString();
+
+  const snowfall24 = conditions ? conditions.snowfall24hIn : null;
+  const snowfall48 = conditions ? conditions.snowfall48hIn : null;
+  const snowfall72 = conditions ? conditions.snowfall72hIn : null;
+  const snowBaseDepth = conditions ? conditions.snowDepthBaseIn : null;
+  const snowSummitDepth = conditions ? conditions.snowDepthSummitIn : null;
+  const shortText = conditions ? conditions.shortText : null;
 
   return (
     <section className="space-y-4">
@@ -88,17 +185,31 @@ export default function ResortPageView({
             Mountain stats
           </h2>
           <p className="text-xs text-[var(--pow-muted)]">
-            Top {elevationTopFeet.toLocaleString()} ft • Base {elevationBaseFeet.toLocaleString()} ft • Vertical drop {verticalDropFeet.toLocaleString()} ft.
+            Top {top} ft • Base {base} ft • Vertical drop {vertical} ft.
           </p>
         </section>
 
-        <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]">
-          <h2 className="mb-2 text-sm font-semibold tracking-tight">
+        <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)] space-y-1">
+          <h2 className="text-sm font-semibold tracking-tight">
             Snowfall and forecast
           </h2>
-          <p className="text-xs text-[var(--pow-muted)]">
-            This card will soon show reported vs modeled snowfall in inches for 24/48/72 hours and a 3–5 day outlook (extended to 14 days), powered by the PowCollective API.
-          </p>
+          {conditions ? (
+            <>
+              <p className="text-xs text-[var(--pow-muted)]">
+                Last 24 hours: {snowfall24} in • 48 hours: {snowfall48} in • 72 hours: {snowfall72} in.
+              </p>
+              <p className="text-xs text-[var(--pow-muted)]">
+                Base depth: {snowBaseDepth} in • Summit depth: {snowSummitDepth} in.
+              </p>
+              <p className="text-xs text-[var(--pow-muted)]">
+                {shortText}
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-[var(--pow-muted)]">
+              Live snowfall and forecast details will appear here as soon as conditions data is available.
+            </p>
+          )}
         </section>
 
         <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]">
