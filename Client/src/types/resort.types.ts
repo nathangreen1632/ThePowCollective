@@ -9,10 +9,11 @@ export type ResortSummary = {
   stateSlug: string;
   size: ResortSize;
   brand: ResortBrand;
-  elevationTopM: number;
-  elevationBaseM: number;
-  verticalDropM: number;
+  elevationTopFt: number;
+  elevationBaseFt: number;
+  verticalDropFt: number;
   lat: number;
   lon: number;
-  driveFromDenverMinutes?: number;
+  defaultCity?: string;
+  defaultDriveFromCityMinutes?: number;
 };
