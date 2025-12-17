@@ -9,6 +9,11 @@ type ResortForConditions = {
   lon: number;
 };
 
+function toInchesFromMeters(value: number | undefined | null): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 0;
+  return Number((value * 39.3700787).toFixed(1));
+}
+
 function toMilesFromMeters(value: number | undefined | null): number {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return 0;
@@ -216,8 +221,9 @@ export async function getConditionsForResort(
       ? snowDepthValues[snowDepthValues.length - 1]
       : 0;
 
-  const snowDepthBaseIn = Number(lastDepth.toFixed(1));
-  const snowDepthSummitIn = Number(lastDepth.toFixed(1));
+  const depthIn = toInchesFromMeters(lastDepth);
+  const snowDepthBaseIn = depthIn;
+  const snowDepthSummitIn = depthIn;
 
   const minutely = meteo.minutely_15;
 
