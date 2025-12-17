@@ -15,26 +15,26 @@ function buildFallbackBuckets(): ClusterBucket[] {
       label: 'Past 15 min',
       tempF: 18,
       snowfallIn: 0.05,
-      windMph: 12
+      windMph: 12,
     },
     {
       label: 'Now',
       tempF: 20,
       snowfallIn: 0.08,
-      windMph: 18
+      windMph: 18,
     },
     {
       label: 'Next 15 min',
       tempF: 21,
       snowfallIn: 0.12,
-      windMph: 24
-    }
+      windMph: 24,
+    },
   ];
 
   return base.map(bucket => {
     const result: ClusterBucket = {
       ...bucket,
-      severity: 'calm'
+      severity: 'calm',
     };
 
     if (result.windMph >= 40 || result.snowfallIn >= 0.2) {
@@ -47,8 +47,26 @@ function buildFallbackBuckets(): ClusterBucket[] {
   });
 }
 
+function formatUpdatedAt(iso: string | null): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function formatFixed(value: number, decimals: number): string {
+  const factor = Math.pow(10, decimals);
+  return String(Math.round(value * factor) / factor);
+}
+
 export default function ResortPageView({
-                                         resortSlug
+                                         resortSlug,
                                        }: Readonly<ResortPageViewProps>): React.ReactElement {
   const [resort, setResort] = useState<ResortSummary | null>(null);
   const [conditions, setConditions] = useState<ConditionsSnapshot | null>(null);
@@ -67,7 +85,7 @@ export default function ResortPageView({
       try {
         const [resortData, conditionsData] = await Promise.all([
           fetchResort(resortSlug),
-          fetchConditionsForResort(resortSlug)
+          fetchConditionsForResort(resortSlug),
         ]);
 
         if (!cancelled) {
@@ -99,9 +117,7 @@ export default function ResortPageView({
           <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
             Resort
           </p>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Loading resort…
-          </h1>
+          <h1 className="text-xl font-semibold tracking-tight">Loading resort…</h1>
         </header>
         <p className="text-sm text-[var(--pow-muted)]">
           Pulling live snow and weather conditions.
@@ -117,13 +133,9 @@ export default function ResortPageView({
           <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
             Resort
           </p>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Something went wrong
-          </h1>
+          <h1 className="text-xl font-semibold tracking-tight">Something went wrong</h1>
         </header>
-        <p className="text-sm text-[var(--pow-danger)]">
-          {error}
-        </p>
+        <p className="text-sm text-[var(--pow-danger)]">{error}</p>
       </section>
     );
   }
@@ -135,9 +147,7 @@ export default function ResortPageView({
           <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
             Resort
           </p>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Resort not found
-          </h1>
+          <h1 className="text-xl font-semibold tracking-tight">Resort not found</h1>
         </header>
         <p className="text-sm text-[var(--pow-muted)]">
           This resort is not yet part of the PowCollective pilot.
@@ -163,15 +173,20 @@ export default function ResortPageView({
   const snowSummitDepth = conditions ? conditions.snowDepthSummitIn : null;
   const shortText = conditions ? conditions.shortText : null;
 
+  const updatedAt = conditions ? formatUpdatedAt(conditions.generatedAtIso) : '';
+  const nowTemp = conditions ? `${formatFixed(conditions.tempF, 0)}°F` : '';
+  const nowFeels = conditions ? `${formatFixed(conditions.feelsLikeF, 0)}°F` : '';
+  const nowWind = conditions ? `${formatFixed(conditions.windMph, 0)} mph` : '';
+  const nowGust = conditions ? `${formatFixed(conditions.gustMph, 0)} mph` : '';
+  const nowVisibility = conditions ? `${formatFixed(conditions.visibilityMiles, 1)} mi` : '';
+
   return (
     <section className="space-y-4">
       <header className="space-y-1">
         <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
           Resort
         </p>
-        <h1 className="text-xl font-semibold tracking-tight">
-          {resort.name}
-        </h1>
+        <h1 className="text-xl font-semibold tracking-tight">{resort.name}</h1>
         <p className="text-sm text-[var(--pow-muted)]">
           Real-time clusters, avalanche awareness, and local happenings for this mountain.
         </p>
@@ -180,53 +195,104 @@ export default function ResortPageView({
       <ClusterGauge buckets={buckets} />
 
       <div className="grid gap-4">
+        <section
+          aria-label="Right now conditions"
+          className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="mb-1 text-sm font-semibold tracking-tight">Right now</h2>
+              {updatedAt ? (
+                <p className="text-xs text-[var(--pow-muted)]">Updated {updatedAt}</p>
+              ) : null}
+            </div>
+          </div>
+
+          {conditions ? (
+            <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+              <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                  Temp
+                </dt>
+                <dd className="mt-1 font-semibold">{nowTemp}</dd>
+              </div>
+
+              <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                  Feels like
+                </dt>
+                <dd className="mt-1 font-semibold">{nowFeels}</dd>
+              </div>
+
+              <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                  Wind
+                </dt>
+                <dd className="mt-1 font-semibold">{nowWind}</dd>
+              </div>
+
+              <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                  Gust
+                </dt>
+                <dd className="mt-1 font-semibold">{nowGust}</dd>
+              </div>
+
+              <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                  Visibility
+                </dt>
+                <dd className="mt-1 font-semibold">{nowVisibility}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="mt-3 text-xs text-[var(--pow-muted)]">
+              Live “right now” conditions will appear here as soon as the feed is available.
+            </p>
+          )}
+        </section>
+
         <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]">
-          <h2 className="mb-1 text-sm font-semibold tracking-tight">
-            Mountain stats
-          </h2>
+          <h2 className="mb-1 text-sm font-semibold tracking-tight">Mountain stats</h2>
           <p className="text-xs text-[var(--pow-muted)]">
             Top {top} ft • Base {base} ft • Vertical drop {vertical} ft.
           </p>
         </section>
 
         <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)] space-y-1">
-          <h2 className="text-sm font-semibold tracking-tight">
-            Snowfall and forecast
-          </h2>
+          <h2 className="text-sm font-semibold tracking-tight">Snowfall and forecast</h2>
           {conditions ? (
             <>
               <p className="text-xs text-[var(--pow-muted)]">
-                Last 24 hours: {snowfall24} in • 48 hours: {snowfall48} in • 72 hours: {snowfall72} in.
+                Last 24 hours: {snowfall24} in • 48 hours: {snowfall48} in • 72 hours:{' '}
+                {snowfall72} in.
               </p>
               <p className="text-xs text-[var(--pow-muted)]">
                 Base depth: {snowBaseDepth} in • Summit depth: {snowSummitDepth} in.
               </p>
-              <p className="text-xs text-[var(--pow-muted)]">
-                {shortText}
-              </p>
+              <p className="text-xs text-[var(--pow-muted)]">{shortText}</p>
             </>
           ) : (
             <p className="text-xs text-[var(--pow-muted)]">
-              Live snowfall and forecast details will appear here as soon as conditions data is available.
+              Live snowfall and forecast details will appear here as soon as conditions data is
+              available.
             </p>
           )}
         </section>
 
         <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]">
-          <h2 className="mb-2 text-sm font-semibold tracking-tight">
-            Avalanche and backcountry
-          </h2>
+          <h2 className="mb-2 text-sm font-semibold tracking-tight">Avalanche and backcountry</h2>
           <p className="text-xs text-[var(--pow-muted)]">
-            Danger ratings by elevation band, avalanche problems, and travel advice for nearby backcountry zones will be rendered here, sourced from official avalanche centers.
+            Danger ratings by elevation band, avalanche problems, and travel advice for nearby
+            backcountry zones will be rendered here, sourced from official avalanche centers.
           </p>
         </section>
 
         <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]">
-          <h2 className="mb-2 text-sm font-semibold tracking-tight">
-            Local events
-          </h2>
+          <h2 className="mb-2 text-sm font-semibold tracking-tight">Local events</h2>
           <p className="text-xs text-[var(--pow-muted)]">
-            Upcoming resort and town events near {resort.name}, including demos, concerts, and rail jams, will be pulled from event feeds here.
+            Upcoming resort and town events near {resort.name}, including demos, concerts, and rail
+            jams, will be pulled from event feeds here.
           </p>
         </section>
       </div>
