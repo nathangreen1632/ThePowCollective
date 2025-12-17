@@ -192,8 +192,6 @@ export default function ResortPageView({
         </p>
       </header>
 
-      <ClusterGauge buckets={buckets} />
-
       <div className="grid gap-4">
         <section
           aria-label="Right now conditions"
@@ -251,6 +249,8 @@ export default function ResortPageView({
             </p>
           )}
         </section>
+
+        <ClusterGauge buckets={buckets} />
 
         <section className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]">
           <h2 className="mb-1 text-sm font-semibold tracking-tight">Mountain stats</h2>
