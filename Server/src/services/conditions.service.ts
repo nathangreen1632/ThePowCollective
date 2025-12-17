@@ -7,6 +7,8 @@ type ResortForConditions = {
   name: string;
   lat: number;
   lon: number;
+  elevationTopFt: number;
+  elevationBaseFt: number;
 };
 
 function toInchesFromMeters(value: number | undefined | null): number {
@@ -169,9 +171,13 @@ export async function getConditionsForResort(
     throw new Error('Resort not found');
   }
 
+  const elevationFt = (resort.elevationTopFt + resort.elevationBaseFt) / 2;
+  const elevationM = Math.round(elevationFt * 0.3048);
+
   const meteo = await fetchOpenMeteoConditions({
     latitude: resort.lat,
-    longitude: resort.lon
+    longitude: resort.lon,
+    elevation: elevationM
   });
 
   if (!meteo) {
