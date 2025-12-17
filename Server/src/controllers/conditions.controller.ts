@@ -1,14 +1,28 @@
-import type { Request, Response } from 'express';
-import { getConditionsForResortSlug } from '../services/conditions.service.js';
+import type { Request, Response, NextFunction } from 'express';
+import { getConditionsForResort } from '../services/conditions.service.js';
 
-export async function getConditions(req: Request, res: Response): Promise<void> {
-  const slug = String(req.params.resortSlug || '');
-  const snapshot = await getConditionsForResortSlug(slug);
+export async function getConditions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const slugParam = req.params.resortSlug;
+  const slug = slugParam.trim().toLowerCase();
 
-  if (!snapshot) {
-    res.status(404).json({ error: 'Resort not found' });
+  if (!slug) {
+    res.status(400).json({ error: 'Missing resort slug' });
     return;
   }
 
-  res.json({ conditions: snapshot });
+  try {
+    const snapshot = await getConditionsForResort(slug);
+    res.json({ conditions: snapshot });
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('Resort not found')) {
+      res.status(404).json({ error: 'Resort not found' });
+      return;
+    }
+
+    next(err);
+  }
 }
