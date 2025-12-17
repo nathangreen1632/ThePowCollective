@@ -1,9 +1,11 @@
+export type ClusterSeverity = 'calm' | 'good' | 'stormy';
+
 export type ClusterBucket = {
   label: string;
   tempF: number;
   snowfallIn: number;
   windMph: number;
-  severity: 'calm' | 'good' | 'stormy';
+  severity: ClusterSeverity;
 };
 
 export type ConditionsSnapshot = {
