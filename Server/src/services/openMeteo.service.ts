@@ -36,6 +36,7 @@ export type OpenMeteoResponse = {
 type FetchArgs = {
   latitude: number;
   longitude: number;
+  elevation?: number;
 };
 
 export async function fetchOpenMeteoConditions(
@@ -46,27 +47,20 @@ export async function fetchOpenMeteoConditions(
   searchParams.set('latitude', String(args.latitude));
   searchParams.set('longitude', String(args.longitude));
 
+  if (typeof args.elevation === 'number' && !Number.isNaN(args.elevation)) {
+    searchParams.set('elevation', String(args.elevation));
+  }
+
   searchParams.set(
     'minutely_15',
-    [
-      'temperature_2m',
-      'snowfall',
-      'wind_speed_10m',
-      'visibility'
-    ].join(',')
+    ['temperature_2m', 'snowfall', 'wind_speed_10m', 'visibility'].join(',')
   );
   searchParams.set('past_minutely_15', '1');
   searchParams.set('forecast_minutely_15', '2');
 
   searchParams.set(
     'hourly',
-    [
-      'snowfall',
-      'snow_depth',
-      'wind_speed_10m',
-      'wind_gusts_10m',
-      'visibility'
-    ].join(',')
+    ['snowfall', 'snow_depth', 'wind_speed_10m', 'wind_gusts_10m', 'visibility'].join(',')
   );
   searchParams.set('past_hours', '72');
   searchParams.set('forecast_hours', '0');
@@ -79,7 +73,7 @@ export async function fetchOpenMeteoConditions(
       'snowfall',
       'wind_speed_10m',
       'wind_gusts_10m',
-      'visibility'
+      'visibility',
     ].join(',')
   );
 
@@ -95,7 +89,7 @@ export async function fetchOpenMeteoConditions(
 
     if (!res.ok) {
       const status = res.status;
-      let body = '';
+      let body;
 
       try {
         body = await res.text();
@@ -111,8 +105,7 @@ export async function fetchOpenMeteoConditions(
       return null;
     }
 
-    const json = (await res.json()) as OpenMeteoResponse;
-    return json;
+    return (await res.json()) as OpenMeteoResponse;
   } catch (err) {
     console.error('Open-Meteo network error:', err);
     return null;
