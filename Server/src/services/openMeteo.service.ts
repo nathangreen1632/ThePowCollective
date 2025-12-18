@@ -52,7 +52,7 @@ const inflight = new Map<string, Promise<OpenMeteoResponse | null>>();
 
 function ttlMs(): number {
   const raw = process.env.OPEN_METEO_CACHE_TTL_MS;
-  const parsed = raw ? Number(raw) : NaN;
+  const parsed = raw ? Number(raw) : Number.NaN;
   if (Number.isFinite(parsed) && parsed > 0) return parsed;
   return DEFAULT_TTL_MS;
 }
