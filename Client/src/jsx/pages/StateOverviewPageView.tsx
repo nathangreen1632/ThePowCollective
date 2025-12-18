@@ -127,18 +127,18 @@ export default function StateOverviewPageView({
             <li key={resort.slug}>
               <Link
                 to={`/resort/${resort.slug}`}
-                className="flex items-center justify-between rounded-xl bg-[var(--pow-surface-alt)] px-3 py-2 text-xs hover:bg-[var(--pow-accent-soft)]"
+                className="flex items-center justify-between rounded-xl bg-[var(--pow-surface-alt)] px-3 py-2 text-base hover:bg-[var(--pow-accent-soft)]"
               >
                 <div className="flex flex-col">
                   <span className="font-medium text-[var(--pow-text)]">
                     {resort.name}
                   </span>
-                  <span className="text-[10px] text-[var(--pow-muted)]">
+                  <span className="text-sm text-[var(--pow-muted)]">
                     {brandLabel(resort.brand)} • {resort.size.toUpperCase()}
                     {drive ? ` • ${drive}` : ''}
                   </span>
                 </div>
-                <span className="text-[10px] text-[var(--pow-accent)]">
+                <span className="text-sm text-[var(--pow-muted)]">
                   View conditions
                 </span>
               </Link>
@@ -150,6 +150,8 @@ export default function StateOverviewPageView({
   }
 
   return (
+    <div className="min-h-screen bg-[var(--pow-bg)] text-[var(--pow-text)]">
+      <div className="mx-auto w-full max-w-5xl px-6 py-10">
     <section className="space-y-4">
       <header className="space-y-1">
         <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
@@ -167,5 +169,7 @@ export default function StateOverviewPageView({
         {body}
       </div>
     </section>
+      </div>
+    </div>
   );
 }
