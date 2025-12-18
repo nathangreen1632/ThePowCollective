@@ -181,6 +181,8 @@ export default function ResortPageView({
   const nowVisibility = conditions ? `${formatFixed(conditions.visibilityMiles, 1)} mi` : '';
 
   return (
+    <div className="min-h-screen bg-[var(--pow-bg)] text-[var(--pow-text)]">
+      <div className="mx-auto w-full max-w-5xl px-6 py-10">
     <section className="space-y-4">
       <header className="space-y-1">
         <p className="text-xs uppercase tracking-[0.18em] text-[var(--pow-muted)]">
@@ -209,38 +211,38 @@ export default function ResortPageView({
           {conditions ? (
             <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
               <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
-                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)] text-center">
                   Temp
                 </dt>
-                <dd className="mt-1 font-semibold">{nowTemp}</dd>
+                <dd className="mt-1 font-semibold text-center">{nowTemp}</dd>
               </div>
 
               <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
-                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)] text-center">
                   Feels like
                 </dt>
-                <dd className="mt-1 font-semibold">{nowFeels}</dd>
+                <dd className="mt-1 font-semibold text-center">{nowFeels}</dd>
               </div>
 
               <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
-                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)] text-center">
                   Wind
                 </dt>
-                <dd className="mt-1 font-semibold">{nowWind}</dd>
+                <dd className="mt-1 font-semibold text-center">{nowWind}</dd>
               </div>
 
               <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
-                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)] text-center">
                   Gust
                 </dt>
-                <dd className="mt-1 font-semibold">{nowGust}</dd>
+                <dd className="mt-1 font-semibold text-center">{nowGust}</dd>
               </div>
 
               <div className="rounded-xl border border-[var(--pow-border)] bg-[var(--pow-surface-alt)] px-3 py-2">
-                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)]">
+                <dt className="text-[0.7rem] uppercase tracking-[0.18em] text-[var(--pow-muted)] text-center">
                   Visibility
                 </dt>
-                <dd className="mt-1 font-semibold">{nowVisibility}</dd>
+                <dd className="mt-1 font-semibold text-center">{nowVisibility}</dd>
               </div>
             </dl>
           ) : (
@@ -297,5 +299,7 @@ export default function ResortPageView({
         </section>
       </div>
     </section>
+      </div>
+    </div>
   );
 }
