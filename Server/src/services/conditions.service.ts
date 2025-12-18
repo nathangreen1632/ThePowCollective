@@ -25,6 +25,75 @@ function toMilesFromMeters(value: number | undefined | null): number {
   return Number(miles.toFixed(1));
 }
 
+const CLUSTER_LABELS = ['Past 15 min', 'Now', 'Next 15 min'];
+
+function pickNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && !Number.isNaN(value) ? value : fallback;
+}
+
+function arrayOrEmpty<T>(value: T[] | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function computeElevationM(resort: ResortForConditions): number {
+  const elevationFt = (resort.elevationTopFt + resort.elevationBaseFt) / 2;
+  return Math.round(elevationFt * 0.3048);
+}
+
+function pickClusterIndices(total: number): [number, number, number] {
+  if (total >= 3) {
+    const last = total - 1;
+    return [last - 2, last - 1, last];
+  }
+
+  if (total === 2) {
+    return [0, 1, 1];
+  }
+
+  return [0, 0, 0];
+}
+
+function buildBucketsFromMinutely(
+  minutely: any,
+  defaults: { tempF: number; windMph: number }
+): ClusterBucket[] {
+  const times = arrayOrEmpty<string>(minutely?.time);
+  if (times.length === 0) {
+    return buildClusterBuckets(
+      CLUSTER_LABELS,
+      [defaults.tempF, defaults.tempF, defaults.tempF],
+      [0, 0, 0],
+      [defaults.windMph, defaults.windMph, defaults.windMph]
+    );
+  }
+
+  const temps = arrayOrEmpty<number>(minutely?.temperature_2m);
+  const snow = arrayOrEmpty<number>(minutely?.snowfall);
+  const wind = arrayOrEmpty<number>(minutely?.wind_speed_10m);
+
+  const [a, b, c] = pickClusterIndices(times.length);
+
+  const tempsPicked = [
+    pickNumber(temps[a], defaults.tempF),
+    pickNumber(temps[b], defaults.tempF),
+    pickNumber(temps[c], defaults.tempF),
+  ];
+
+  const snowPicked = [
+    pickNumber(snow[a], 0),
+    pickNumber(snow[b], 0),
+    pickNumber(snow[c], 0),
+  ];
+
+  const windPicked = [
+    pickNumber(wind[a], defaults.windMph),
+    pickNumber(wind[b], defaults.windMph),
+    pickNumber(wind[c], defaults.windMph),
+  ];
+
+  return buildClusterBuckets(CLUSTER_LABELS, tempsPicked, snowPicked, windPicked);
+}
+
 function sumLast(values: number[] | undefined, count: number): number {
   if (!values || values.length === 0) {
     return 0;
@@ -166,18 +235,14 @@ export async function getConditionsForResort(
   slug: string
 ): Promise<ConditionsSnapshot> {
   const resort = getResortBySlug(slug) as ResortForConditions | undefined;
+  if (!resort) throw new Error('Resort not found');
 
-  if (!resort) {
-    throw new Error('Resort not found');
-  }
-
-  const elevationFt = (resort.elevationTopFt + resort.elevationBaseFt) / 2;
-  const elevationM = Math.round(elevationFt * 0.3048);
+  const elevationM = computeElevationM(resort);
 
   const meteo = await fetchOpenMeteoConditions({
     latitude: resort.lat,
     longitude: resort.lon,
-    elevation: elevationM
+    elevation: elevationM,
   });
 
   if (!meteo) {
@@ -186,124 +251,33 @@ export async function getConditionsForResort(
 
   const current = meteo.current;
 
-  let tempF = 20;
-  if (current && typeof current.temperature_2m === 'number') {
-    tempF = current.temperature_2m;
-  }
+  const tempF = pickNumber(current?.temperature_2m, 20);
+  const feelsLikeF = pickNumber(current?.apparent_temperature, tempF);
+  const windMph = pickNumber(current?.wind_speed_10m, 10);
+  const gustMph = pickNumber(current?.wind_gusts_10m, windMph);
 
-  let feelsLikeF = tempF;
-  if (current && typeof current.apparent_temperature === 'number') {
-    feelsLikeF = current.apparent_temperature;
-  }
-
-  let windMph = 10;
-  if (current && typeof current.wind_speed_10m === 'number') {
-    windMph = current.wind_speed_10m;
-  }
-
-  let gustMph = windMph;
-  if (current && typeof current.wind_gusts_10m === 'number') {
-    gustMph = current.wind_gusts_10m;
-  }
-
-  let visibilityMiles = 0;
-  if (current && typeof current.visibility === 'number') {
-    visibilityMiles = toMilesFromMeters(current.visibility);
-  }
+  const visibilityRaw = current?.visibility;
+  const visibilityMiles =
+    typeof visibilityRaw === 'number' ? toMilesFromMeters(visibilityRaw) : 0;
 
   const hourly = meteo.hourly;
 
-  const snowfallHourly =
-    hourly && Array.isArray(hourly.snowfall) ? hourly.snowfall : [];
-
+  const snowfallHourly = arrayOrEmpty<number>(hourly?.snowfall);
   const snowfall24hIn = sumLast(snowfallHourly, 24);
   const snowfall48hIn = sumLast(snowfallHourly, 48);
   const snowfall72hIn = sumLast(snowfallHourly, 72);
 
-  const snowDepthValues =
-    hourly && Array.isArray(hourly.snow_depth) ? hourly.snow_depth : [];
-  const lastDepth =
-    snowDepthValues.length > 0
-      ? snowDepthValues[snowDepthValues.length - 1]
-      : 0;
+  const snowDepthValues = arrayOrEmpty<number>(hourly?.snow_depth);
+  const lastDepth = snowDepthValues.length > 0 ? snowDepthValues.at(-1) : 0;
 
   const depthIn = toInchesFromMeters(lastDepth);
   const snowDepthBaseIn = depthIn;
   const snowDepthSummitIn = depthIn;
 
-  const minutely = meteo.minutely_15;
-
-  let clusterBuckets: ClusterBucket[];
-
-  if (
-    minutely &&
-    Array.isArray(minutely.time) &&
-    minutely.time.length > 0
-  ) {
-    const temps = minutely.temperature_2m || [];
-    const snow = minutely.snowfall || [];
-    const wind = minutely.wind_speed_10m || [];
-
-    const total = minutely.time.length;
-    const lastIndex = total - 1;
-
-    const indices: number[] = [];
-
-    if (total >= 3) {
-      indices.push(lastIndex - 2, lastIndex - 1, lastIndex);
-    } else if (total === 2) {
-      indices.push(0, 1, 1);
-    } else {
-      indices.push(0, 0, 0);
-    }
-
-    const labels = ['Past 15 min', 'Now', 'Next 15 min'];
-    const tempsPicked: number[] = [];
-    const snowPicked: number[] = [];
-    const windPicked: number[] = [];
-
-    for (const element of indices) {
-      const index = element;
-
-      let t = tempF;
-      if (typeof temps[index] === 'number') {
-        t = temps[index];
-      }
-
-      let s = 0;
-      if (typeof snow[index] === 'number') {
-        s = snow[index];
-      }
-
-      let w = windMph;
-      if (typeof wind[index] === 'number') {
-        w = wind[index];
-      }
-
-      tempsPicked.push(t);
-      snowPicked.push(s);
-      windPicked.push(w);
-    }
-
-    clusterBuckets = buildClusterBuckets(
-      labels,
-      tempsPicked,
-      snowPicked,
-      windPicked
-    );
-  } else {
-    const labels = ['Past 15 min', 'Now', 'Next 15 min'];
-    const temps = [tempF, tempF, tempF];
-    const snowValues = [0, 0, 0];
-    const windValues = [windMph, windMph, windMph];
-
-    clusterBuckets = buildClusterBuckets(
-      labels,
-      temps,
-      snowValues,
-      windValues
-    );
-  }
+  const clusterBuckets = buildBucketsFromMinutely(meteo.minutely_15, {
+    tempF,
+    windMph,
+  });
 
   const shortText = buildShortText(
     snowfall24hIn,
@@ -326,6 +300,6 @@ export async function getConditionsForResort(
     snowDepthBaseIn,
     snowDepthSummitIn,
     shortText,
-    clusterBuckets
+    clusterBuckets,
   };
 }
