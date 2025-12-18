@@ -1,12 +1,5 @@
 import React from 'react';
-
-export type ClusterBucket = {
-  label: string;
-  tempC: number;
-  snowfallMm: number;
-  windKph: number;
-  severity: 'calm' | 'good' | 'stormy';
-};
+import type { ClusterBucket } from '../types/conditions.types';
 
 type ClusterGaugeProps = {
   buckets: ClusterBucket[];
@@ -18,9 +11,24 @@ function severityLabel(severity: ClusterBucket['severity']): string {
   return 'Stormy';
 }
 
+function severityClassName(severity: ClusterBucket['severity']): string {
+  if (severity === 'stormy') {
+    return 'mt-2 rounded-full bg-[var(--pow-danger-soft)] px-2 py-1 text-[10px] font-semibold text-[var(--pow-danger)]';
+  }
+
+  if (severity === 'good') {
+    return 'mt-2 rounded-full bg-[var(--pow-accent-soft)] px-2 py-1 text-[10px] font-semibold text-[var(--pow-accent)]';
+  }
+
+  return 'mt-2 rounded-full bg-[var(--pow-success-soft)] px-2 py-1 text-[10px] font-semibold text-[var(--pow-success)]';
+}
+
 export default function ClusterGauge({ buckets }: Readonly<ClusterGaugeProps>): React.ReactElement {
   return (
-    <section aria-label="Short-term snow and weather cluster" className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]">
+    <section
+      aria-label="Short-term snow and weather cluster"
+      className="rounded-2xl border border-[var(--pow-border)] bg-[var(--pow-surface)] p-4 shadow-[0_12px_30px_var(--pow-card-shadow)]"
+    >
       <h2 className="mb-3 text-sm font-semibold tracking-tight">
         Next 30 minutes at a glance
       </h2>
@@ -34,23 +42,15 @@ export default function ClusterGauge({ buckets }: Readonly<ClusterGaugeProps>): 
               {bucket.label}
             </span>
             <span className="text-sm font-semibold">
-              {Math.round(bucket.tempC)}°C
+              {Math.round(bucket.tempF)}°F
             </span>
             <span className="mt-1 text-[10px] text-[var(--pow-muted)]">
-              {bucket.snowfallMm.toFixed(1)} mm snow
+              {bucket.snowfallIn.toFixed(2)} in snow
             </span>
             <span className="text-[10px] text-[var(--pow-muted)]">
-              {Math.round(bucket.windKph)} km/h wind
+              {Math.round(bucket.windMph)} mph wind
             </span>
-            <span
-              className={
-                bucket.severity === 'stormy'
-                  ? 'mt-2 rounded-full bg-[var(--pow-danger-soft)] px-2 py-1 text-[10px] font-semibold text-[var(--pow-danger)]'
-                  : bucket.severity === 'good'
-                    ? 'mt-2 rounded-full bg-[var(--pow-accent-soft)] px-2 py-1 text-[10px] font-semibold text-[var(--pow-accent)]'
-                    : 'mt-2 rounded-full bg-[var(--pow-success-soft)] px-2 py-1 text-[10px] font-semibold text-[var(--pow-success)]'
-              }
-            >
+            <span className={severityClassName(bucket.severity)}>
               {severityLabel(bucket.severity)}
             </span>
           </div>
